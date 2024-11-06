@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #login-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            color: green;
+            margin-bottom: 10px;
+        }
+
+        #captchaBlock {
+            display: none;
+        }
+
+        #captchaImg {
+            width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .small-text {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* 新增悬浮窗样式 */
+        #messagePopup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<div id="login-form">
+    <h2>用户登录</h2>
+    <form action="/user/login" method="post">
+        <label for="uname">用户名：</label><br>
+        <input type="text" id="uname" name="uname" required><br><br>
+        <label for="password">密码：</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+
+        <div id="captchaBlock">
+            <label for="captcha">验证码：</label><br>
+            <input type="text" id="captcha" name="captcha"><br><br>
+            <img id="captchaImg" src="/vc.jpg" alt="验证码"><br>
+            <button type="button" onclick="refreshCaptcha()">刷新验证码</button><br><br>
+        </div>
+
+        <input type="submit" value="登录">
+    </form>
+
+    <div class="small-text">
+        <a href="/user/register">注册用户</a>
+    </div>
+</div>
+<!-- 新增悬浮窗元素 -->
+<div id="messagePopup"></div>
+
+<script>
+    function refreshCaptcha() {
+        var img = document.getElementById('captchaImg');
+        img.src = '/vc.jpg?' + new Date().getTime();
+    }
+
+    fetch('/get_error-count')
+        .then(response => response.json())
+        .then(data => {
+            console.log('errorCount:', data.errorCount);
+            if (data.errorCount >= 1) {
+                document.getElementById('captchaBlock').style.display = 'block';
+            } else {
+                document.getElementById('captchaBlock').style.display = 'none';
+            }
+        })
+        .catch(error => console.error('获取错误次数失败:', error));
+
+    document.querySelector('form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        fetch('/user/login', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('后端返回的数据:', data);
+                if (data.code === "0") {
+                    // 登录成功，设置悬浮窗消息并显示
+                    document.getElementById('messagePopup').textContent = data.msg;
+                    document.getElementById('messagePopup').style.display = 'block';
+                    // 设置定时器，1.5 秒后自动跳转到主页
+                    setTimeout(() => {
+                        console.log('准备跳转到:', data.url);
+                        window.location.href = data.url;
+                    }, 1500);
+                } else {
+                    // 登录失败，设置悬浮窗消息并显示
+                    document.getElementById('messagePopup').textContent = data.msg;
+                    document.getElementById('messagePopup').style.display = 'block';
+                    // 设置定时器，2 秒后自动跳转到登录页面
+                    setTimeout(() => {
+                        window.location.href = '/user/login';
+                    }, 2000);
+                }
+            })
+            .catch(error => console.error('登录请求失败:', error));
+    });
+</script>
+
+</body>
+
+</html>

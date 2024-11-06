@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #register-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        .success {
+            color: green;
+            margin-bottom: 10px;
+        }
+
+        /* 新增悬浮窗样式 */
+        #messagePopup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<div id="register-form">
+    <h2>用户注册</h2>
+    <form id="registerForm">
+        <label for="uname">用户名：</label><br>
+        <input type="text" id="uname" name="uname" required><br><br>
+        <label for="password">密码：</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        <label for="email">邮箱：</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+        <input type="submit" value="注册">
+    </form>
+    <div style="text-align: center; margin-top: 10px;">
+        <a href="/user/login">用户登录</a>
+    </div>
+</div>
+<!-- 新增悬浮窗元素 -->
+<div id="messagePopup"></div>
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const uname = document.getElementById('uname').value;
+        const password = document.getElementById('password').value;
+        const email = document.getElementById('email').value;
+        const newUser = {
+            uname: uname,
+            password: password,
+            email: email
+        };
+        fetch('/user/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newUser)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('后端返回的数据:', data);
+                if (data.code === "0") {
+                    // 注册成功，设置悬浮窗消息并显示
+                    document.getElementById('messagePopup').textContent = data.msg;
+                    document.getElementById('messagePopup').style.display = 'block';
+                    // 设置定时器，1.5 秒后自动跳转
+                    setTimeout(() => {
+                        console.log('准备跳转到:', '/user/login');
+                        window.location.href = '/user/login';
+                    }, 1500);
+                } else {
+                    // 注册失败，设置悬浮窗消息并显示
+                    document.getElementById('messagePopup').textContent = data.msg;
+                    document.getElementById('messagePopup').style.display = 'block';
+                    // 设置定时器，1.5 秒后自动跳转到
+                    setTimeout(() => {
+                        console.log('准备跳转到:', '/user/register');
+                        window.location.href = '/user/register';
+                    }, 1500);
+                }
+            })
+            .catch(error => console.error('注册请求失败:', error));
+    });
+</script>
+</body>
+</html>
