@@ -90,6 +90,14 @@ public class Result<T> {
         result.setUrl(url);
         return result;
     }
+    //构造函数，参数为msg
+    public static Result success(String msg,String token) {
+        Result result = new Result<>();
+        result.setCode("0");
+        result.setMsg(msg);
+        result.setToken(token);
+        return result;
+    }
 //    //构造函数，参数为code和msg、errorCount
 //    public static <T> Result<T> succes(String code, String msg,int errorCount) {
 //        Result<T> result = new Result<>();

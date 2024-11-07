@@ -21,7 +21,7 @@ public class UserController {
     private UserService userService;
     @Resource
     private  TokenUtils tokenUtils;
-    @Autowired
+    @Resource
     private UserDao userDao;
 
     // 登录
@@ -59,9 +59,10 @@ public class UserController {
             Cookie cookie_longToken = new Cookie("cookie_longToken", longToken);
             cookie_longToken.setMaxAge(3600 * 24 * 7); // 设置 Cookie 过期时间为 1 周
             // 表示当前项目下都携带这个cookie
-            cookie_longToken.setPath(request.getContextPath());
+            cookie_longToken.setPath("/");
             // 添加到 response 中
             response.addCookie(cookie_longToken);
+
             // 登录成功，重定向到 /user/home
             return Result.success("user", "登录成功",errorCount,"/user/home");
         } else {

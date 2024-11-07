@@ -20,15 +20,13 @@ public class TokenUtils {
     }
 
     private static final String jwtSecret = generateJwtSecret();
-
     // 短令牌过期时间（以毫秒为单位，这里设置为 5 分钟）
     private static final long shortTokenExpiration = 5 * 60 * 1000;
-
     // 长令牌过期时间（以毫秒为单位，这里设置为 1 天）
     private static final long longTokenExpiration = 24 * 60 * 60 * 1000;
 
     // 生成短令牌，包含文档 ID 和用户名
-    public String generateShortToken(String documentId, String username) {
+    public static String generateShortToken(String documentId, String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("documentId", documentId);
         claims.put("username", username);
@@ -41,7 +39,7 @@ public class TokenUtils {
     }
 
     // 验证短令牌
-    public boolean validateShortToken(String token, String documentId, String username) {
+    public static boolean validateShortToken(String token, String documentId, String username) {
         try {
             Claims claims = Jwts.parser()
                     .setSigningKey(jwtSecret)
@@ -68,7 +66,6 @@ public class TokenUtils {
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
-
     // 验证长令牌
     public static boolean validateLongToken(String token, String username) {
         try {
@@ -84,7 +81,6 @@ public class TokenUtils {
             return false;
         }
     }
-
     // 从长令牌中获取用户名
     public static String getUsernameFromLongToken(String longToken) {
         try {

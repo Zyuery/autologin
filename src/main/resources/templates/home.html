@@ -15,17 +15,20 @@
             height: 100vh;
             margin: 0;
         }
+
         #home-content {
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
+            width: 400px;
             text-align: center;
         }
+
         h2 {
             margin-bottom: 20px;
         }
+
         /* 新增退出按钮样式 */
         #logoutButton {
             background-color: #ff0000;
@@ -36,6 +39,7 @@
             border-radius: 5px;
             margin-top: 20px;
         }
+
         /* 新增悬浮窗样式 */
         #messagePopup {
             position: fixed;
@@ -48,40 +52,147 @@
             border-radius: 5px;
             display: none;
         }
+
+        /* 生成短令牌和下载文件的块样式 */
+        .token-download-section {
+            margin-top: 30px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .token-download-section label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .token-download-section input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 70%;
+        }
+
+        .token-download-section select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+
+        .token-download-section button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 
 <body>
 <div id="home-content">
     <h2 th:text="${welcomeMessage}"></h2>
+
     <button id="logoutButton">退出登录</button>
+
     <!-- 添加悬浮窗元素 -->
     <div id="messagePopup"></div>
+
+    <!-- 添加生成短令牌和下载文件的块 -->
+    <div class="token-download-section">
+        <label for="fileId">输入文件 ID(bite第一次任务)：</label>
+        <input type="text" id="fileId">
+        <select id="fileFormat">
+            <option value=".pdf">PDF</option>
+            <option value=".txt">TXT</option>
+            <option value=".png">PNG</option>
+            <!-- 添加更多文件格式选项 -->
+        </select>
+        <button id="downloadButton">下载文件</button>
+    </div>
+
 </div>
 
 <script>
+    window.onload = function () {
 
-    document.getElementById('logoutButton').addEventListener('click', function () {
-        fetch('/user/logout', {
-            method: 'GET'
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('后端返回的数据:', data);
-                if (data.code === "0") {
-                    // 退出成功，设置悬浮窗消息并显示
-                    document.getElementById('messagePopup').textContent = data.msg;
-                    document.getElementById('messagePopup').style.display = 'block';
-                    // 设置定时器，跳转到登录页面
-                    setTimeout(() => {
-                        window.location.href = data.url;
-                    }, 1500);
-                }
+        // 退出按钮点击事件
+        document.getElementById('logoutButton').addEventListener('click', function () {
+            fetch('/user/logout', {
+                method: 'GET'
             })
-            .catch(error => console.error('退出请求失败:', error));
-    });
-</script>
+                .then(response => response.json())
+                .then(data => {
+                    console.log('后端返回的数据:', data);
+                    if (data.code === "0") {
+                        // 退出成功，设置悬浮窗消息并显示
+                        document.getElementById('messagePopup').textContent = data.msg;
+                        document.getElementById('messagePopup').style.display = 'block';
+                        // 设置定时器，跳转到登录页面
+                        setTimeout(() => {
+                            window.location.href = data.url;
+                        }, 1500);
+                    }
+                })
+                .catch(error => console.error('退出请求失败:', error));
+        });
 
+        // 下载按钮点击事件
+        document.getElementById('downloadButton').addEventListener('click', function () {
+            const fileIdInput = document.getElementById('fileId');
+            const fileId = fileIdInput.value;
+            const fileFormatSelect = document.getElementById('fileFormat');
+            const fileFormat = fileFormatSelect.value;
+            sessionStorage.setItem('fileID', fileId);
+            sessionStorage.setItem('fileFormat', fileFormat);
+            $.ajax({
+                url: '/download?fileId=' + fileId,
+                method: 'GET',
+                success: function (response) {
+                    const blob = new Blob([response], { type: 'application/octet-stream' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = sessionStorage.getItem('fileID') + sessionStorage.getItem('fileFormat');
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                },
+                error: function (error) {
+                    // 在悬浮窗显示下载文件的错误消息
+                    document.getElementById('messagePopup').textContent = '下载文件失败：' + error.responseText;
+                    document.getElementById('messagePopup').style.display = 'block';
+                }
+            });
+        });
+
+        // 生成短令牌的按钮点击事件
+        document.getElementById('generateShortTokenButton').addEventListener('click', function () {
+            const fileIdInput = document.getElementById('fileId');
+            const fileId = fileIdInput.value;
+            const fileFormatSelect = document.getElementById('fileFormat');
+            const fileFormat = fileFormatSelect.value;
+            // 发起生成短令牌的请求，并传递文件 ID 和文件格式
+            fetch('/shortToken?fileId=' + fileId + '&fileFormat=' + fileFormat, {
+                method: 'GET'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('后端返回的数据:', data);
+                    if (data.code === "0") {
+                        // 短令牌生成成功，设置悬浮窗消息并显示
+                        document.getElementById('messagePopup').textContent = data.msg;
+                        document.getElementById('messagePopup').style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('生成短令牌请求失败:', error));
+        });
+    }
+</script>
 </body>
 
 </html>
